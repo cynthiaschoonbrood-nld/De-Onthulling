@@ -1,1 +1,0 @@
-Upload alleen index.html naar de hoofdmap van je GitHub-repository. Vervang het bestaande index.html. Wacht daarna 1-2 minuten en vernieuw de live website volledig. Het geluid zit in index.html ingebouwd; er is geen assets-map nodig.
