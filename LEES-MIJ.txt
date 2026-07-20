@@ -1,0 +1,3 @@
+Deze versie toont eerst automatisch het visuele opstartpatroon.
+Daarna verschijnt OPEN FRAGMENT. Het geluid start bij die klik, omdat browsers audio vóór een klik blokkeren.
+Upload alleen index.html en vervang het bestaande bestand in GitHub.
