@@ -1,0 +1,10 @@
+EPIC VERSIE
+
+1. Pak het zipbestand uit.
+2. Vervang op GitHub alleen het bestaande index.html door dit nieuwe index.html.
+3. Klik op Commit changes.
+4. Wacht ongeveer 1-2 minuten en open de website opnieuw.
+5. Gebruik voor een eerlijke test een normaal tabblad en zet het mediavolume aan.
+
+De visuele intro draait vóór OPEN FRAGMENT. Vanwege browserbeveiliging begint audio bij de klik.
+De aftelling heeft originele zware impacts, een riser, dramatische stilte en een reveal-hit vóór het applaus.
