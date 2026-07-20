@@ -1,16 +1,16 @@
-# De Onthulling — Fragment 01 (versie 2)
+# De Onthulling — Fragment 01 v3
 
-Deze versie bevat:
-- langzamere, filmische timing;
-- betrouwbaardere audio via Web Audio;
-- MP3- en OGG-fallback;
-- mobielvriendelijke weergave.
+Deze versie lost twee problemen op:
 
-## Bestaande GitHub-bestanden vervangen
+- de openingsknop wacht niet meer op het downloaden en decoderen van audio;
+- de audio wordt tijdens de eerste klik stil geactiveerd, zodat hij na de aftelling op laptop en telefoon wél hoorbaar kan starten.
 
-Upload `index.html`, `styles.css`, `script.js` en de map `assets` naar de root van de repository. Kies bij dubbele bestandsnamen voor vervangen/overschrijven en klik daarna op **Commit changes**.
+## Uploaden
+Upload en vervang in de hoofdmap van GitHub:
 
-De live pagina staat op:
-`https://cynthiaschoonbrood-nld.github.io/De-Onthulling/`
+- `index.html`
+- `styles.css`
+- `script.js`
+- de volledige map `assets`
 
-Ververs na het uploaden de pagina volledig. Op Windows: `Ctrl + F5`. Op telefoon: sluit de pagina en open de link opnieuw.
+Klik daarna op **Commit changes**. Wacht 1–2 minuten en vernieuw de live pagina volledig.

@@ -16,82 +16,63 @@ const countdownEl = document.getElementById('countdown');
 const audioStatus = document.querySelector('.audio-status');
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-let audioContext = null;
-let audioBuffer = null;
-let currentSource = null;
-let completionTimer = null;
+let completionStarted = false;
 
 function showScreen(name) {
   Object.values(screens).forEach(screen => screen.classList.remove('is-visible'));
   screens[name].classList.add('is-visible');
 }
 
-async function prepareAudio() {
+function stopAudio() {
+  audio.pause();
+  audio.loop = false;
+  audio.muted = false;
+  audio.volume = 1;
+  try { audio.currentTime = 0; } catch (_) {}
+}
+
+async function primeAudio() {
+  /*
+    Start the real audio element during the user's click. It keeps playing
+    silently in a loop during the intro. This avoids losing the browser's
+    permission to play sound after the long cinematic sequence.
+  */
   try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return false;
-
-    audioContext = audioContext || new AudioContextClass();
-    await audioContext.resume();
-
-    if (!audioBuffer) {
-      const response = await fetch('assets/fragment-01-applaus.mp3', { cache: 'force-cache' });
-      if (!response.ok) throw new Error('Audiobestand kon niet worden geladen.');
-      const arrayBuffer = await response.arrayBuffer();
-      audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    }
-
+    audio.loop = true;
+    audio.muted = true;
+    audio.volume = 0;
+    audio.currentTime = 0;
+    await audio.play();
     return true;
   } catch (error) {
-    console.warn('Web Audio voorbereiding mislukt:', error);
+    console.warn('Audio kon niet vooraf worden gestart:', error);
     return false;
   }
 }
 
-function stopAudio() {
-  clearTimeout(completionTimer);
-  completionTimer = null;
-
-  if (currentSource) {
-    try { currentSource.stop(); } catch (_) {}
-    currentSource.disconnect();
-    currentSource = null;
-  }
-
-  audio.pause();
-  audio.currentTime = 0;
-}
-
 async function finishFragment() {
-  await wait(1300);
+  if (completionStarted) return;
+  completionStarted = true;
+  await wait(1200);
   showScreen('complete');
   localStorage.setItem('de-onthulling-fragment-01', 'voltooid');
 }
 
-async function playAudio() {
-  stopAudio();
+async function revealAudio() {
+  completionStarted = false;
   audioStatus.textContent = 'Audiofragment wordt afgespeeld';
 
-  if (audioContext && audioBuffer) {
-    await audioContext.resume();
-    currentSource = audioContext.createBufferSource();
-    currentSource.buffer = audioBuffer;
-    currentSource.connect(audioContext.destination);
-    currentSource.onended = () => {
-      currentSource = null;
-      finishFragment();
-    };
-    currentSource.start(0);
-    return;
-  }
-
   try {
+    audio.loop = false;
+    audio.pause();
     audio.currentTime = 0;
+    audio.muted = false;
+    audio.volume = 1;
     await audio.play();
   } catch (error) {
-    console.warn('HTML-audio kon niet starten:', error);
-    audioStatus.textContent = 'Tik op “Opnieuw afspelen” om het geluid te starten.';
+    console.warn('Geluid kon niet automatisch starten:', error);
+    audioStatus.textContent = 'Tik hieronder om het geluidsfragment te starten.';
+    replayButton.textContent = 'START GELUID';
   }
 }
 
@@ -114,10 +95,10 @@ async function runProtocol() {
     line.innerHTML = text;
     protocolLog.appendChild(line);
     progressBar.style.width = `${progress}%`;
-    await wait(1450);
+    await wait(1200);
   }
 
-  await wait(1500);
+  await wait(900);
   await runCountdown();
 }
 
@@ -129,49 +110,49 @@ async function runCountdown() {
     countdownEl.style.animation = 'none';
     void countdownEl.offsetWidth;
     countdownEl.style.animation = '';
-    await wait(1500);
+    await wait(1250);
   }
 
-  await wait(450);
+  await wait(300);
   showScreen('audio');
-  await playAudio();
+  await revealAudio();
 }
 
 startButton.addEventListener('click', async () => {
   startButton.disabled = true;
-  startButton.textContent = 'FRAGMENT WORDT GELADEN…';
+  startButton.textContent = 'FRAGMENT WORDT GEOPEND…';
 
-  const prepared = await prepareAudio();
-  if (!prepared) {
-    // Deze korte start/pauze geeft de gewone audiospeler toestemming in strengere browsers.
-    try {
-      audio.muted = true;
-      await audio.play();
-      audio.pause();
-      audio.currentTime = 0;
-      audio.muted = false;
-    } catch (_) {
-      audio.muted = false;
-    }
-  }
-
+  // Do not wait for a separate download/decode step. Start immediately.
+  primeAudio();
   await runProtocol();
+
   startButton.disabled = false;
   startButton.textContent = 'OPEN FRAGMENT';
 });
 
 replayButton.addEventListener('click', async () => {
-  await prepareAudio();
-  await playAudio();
+  replayButton.textContent = 'OPNIEUW AFSPELEN';
+  completionStarted = false;
+  audio.loop = false;
+  audio.muted = false;
+  audio.volume = 1;
+  audio.currentTime = 0;
+  try {
+    await audio.play();
+    audioStatus.textContent = 'Audiofragment wordt afgespeeld';
+  } catch (error) {
+    audioStatus.textContent = 'Het geluid kon niet starten. Controleer of deze pagina niet gedempt is.';
+  }
 });
 
 restartButton.addEventListener('click', () => {
   stopAudio();
+  completionStarted = false;
   showScreen('start');
 });
 
 audio.addEventListener('ended', finishFragment);
-
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) stopAudio();
+audio.addEventListener('error', () => {
+  audioStatus.textContent = 'Het audiobestand kon niet worden geladen.';
+  replayButton.textContent = 'PROBEER OPNIEUW';
 });
