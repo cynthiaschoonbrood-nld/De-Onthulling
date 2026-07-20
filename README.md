@@ -1,15 +1,16 @@
-# De Onthulling — Fragment 01
+# De Onthulling — Fragment 01 (versie 2)
 
-## Uploaden naar GitHub
-1. Open de repository `de-onthulling`.
-2. Kies **Add file → Upload files**.
-3. Upload `index.html`, `styles.css`, `script.js` en de map `assets`.
-4. Klik op **Commit changes**.
-5. Open **Settings → Pages**.
-6. Kies bij **Build and deployment**: Source `Deploy from a branch`, Branch `main`, Folder `/ (root)`.
-7. Klik op **Save**.
+Deze versie bevat:
+- langzamere, filmische timing;
+- betrouwbaardere audio via Web Audio;
+- MP3- en OGG-fallback;
+- mobielvriendelijke weergave.
 
-Daarna verschijnt de site op:
-`https://cynthiaschoonbrood-nld.github.io/de-onthulling/`
+## Bestaande GitHub-bestanden vervangen
 
-De knop **OPEN FRAGMENT** is nodig omdat mobiele browsers geluid pas toestaan na een tik van de bezoeker.
+Upload `index.html`, `styles.css`, `script.js` en de map `assets` naar de root van de repository. Kies bij dubbele bestandsnamen voor vervangen/overschrijven en klik daarna op **Commit changes**.
+
+De live pagina staat op:
+`https://cynthiaschoonbrood-nld.github.io/De-Onthulling/`
+
+Ververs na het uploaden de pagina volledig. Op Windows: `Ctrl + F5`. Op telefoon: sluit de pagina en open de link opnieuw.
