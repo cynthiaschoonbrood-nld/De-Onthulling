@@ -1,0 +1,17 @@
+DE ONTHULLING — LEVEL 1
+
+Dit pakket bewaart het oorspronkelijke ontwerp en vervangt alleen de inhoud:
+- Fragment 01 is gewijzigd naar LEVEL 1.
+- Het applaus is verwijderd.
+- De zes zinnen verschijnen één voor één.
+- Daarna verschijnt de volledige tekst en vervaagt langzaam.
+- Tijdens de aftelling zijn subtiele DH-monogrammen gemengd tussen de gouden deeltjes.
+
+UPLOADEN:
+1. Pak het ZIP-bestand uit.
+2. Upload alleen index.html naar de hoofdmap van je GitHub-repository.
+3. Klik op Commit changes.
+4. Wacht tot GitHub Pages opnieuw is gepubliceerd.
+5. Open de pagina in een nieuw tabblad en zet het mediavolume aan.
+
+Bewaar de eerdere applausversie apart als: LEVEL APPLAUS.
