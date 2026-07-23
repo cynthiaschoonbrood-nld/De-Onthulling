@@ -1,6 +1,0 @@
-DE ONTHULLING — LEVEL 2
-
-Upload de map DE-ONTHULLING-LEVEL-2 naar een map 'level-2' in je GitHub Pages-repository. Zorg dat index.html en assets bij elkaar blijven. De uiteindelijke link wordt dan waarschijnlijk:
-https://cynthiaschoonbrood-nld.github.io/De-Onthulling/level-2/
-
-Mobiele browsers vereisen een tik op de startknop voordat audio mag afspelen.
