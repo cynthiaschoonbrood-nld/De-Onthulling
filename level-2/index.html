@@ -45,15 +45,20 @@ const sceneEls=[...document.querySelectorAll('.scene')], music=$('#music');
 function show(id){layers.forEach(x=>x.classList.remove('active')); $('#cinema').classList.remove('active'); $(id).classList.add('active')}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 let AC=null,masterGain=null,noiseBuffer=null,audioReady=false,musicBuffer=null,musicSource=null,musicGain=null;
-function unlockAudio(){
+async function unlockAudio(){
  try{
   const C=window.AudioContext||window.webkitAudioContext;
   AC=AC||new C();
-  if(AC.state==='suspended') AC.resume();
+  if(AC.state==='suspended') await AC.resume();
   if(!masterGain){masterGain=AC.createGain();masterGain.gain.value=.9;masterGain.connect(AC.destination)}
   if(!noiseBuffer){noiseBuffer=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate);const a=noiseBuffer.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1}
-  audioReady=true;
- }catch(e){console.warn('AudioContext niet beschikbaar',e)}
+  // Een vrijwel onhoorbaar tikje tijdens de echte gebruikersklik houdt iOS/Android-audio ontgrendeld.
+  const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;
+  o.frequency.value=40;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.001,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+.04);
+  o.connect(g).connect(masterGain);o.start(t);o.stop(t+.05);
+  audioReady=AC.state==='running';
+  return audioReady;
+ }catch(e){audioReady=false;console.warn('AudioContext niet beschikbaar',e);return false}
 }
 function osc(freq=440,dur=.12,vol=.08,type='sine',endFreq=null,delay=0){
  if(!audioReady||!AC)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(freq,t);if(endFreq)o.frequency.exponentialRampToValueAtTime(Math.max(1,endFreq),t+dur);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(masterGain);o.start(t);o.stop(t+dur+.02)
@@ -62,9 +67,31 @@ function noise(dur=.18,vol=.06,filterFreq=1600,delay=0){
  if(!audioReady||!AC||!noiseBuffer)return;const t=AC.currentTime+delay,src=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();src.buffer=noiseBuffer;f.type='bandpass';f.frequency.value=filterFreq;f.Q.value=.8;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+dur);src.connect(f).connect(g).connect(masterGain);src.start(t);src.stop(t+dur+.02)
 }
 function protocolSound(i){const base=360+i*115;osc(base,.18,.12+i*.018,'sine',base+240,.0);osc(base*2,.11,.055+i*.008,'triangle',base*2.35,.05);osc(120+i*18,.28,.06+i*.012,'sine',72+i*8,.0);if(navigator.vibrate)navigator.vibrate([35+i*12,25,30+i*10])}
-function countdownSound(n){const strength=4-n;osc(88-n*5,.78,.24+.08*strength,'sine',24);osc(210-n*15,.42,.10+.045*strength,'sawtooth',62);noise(.24+.08*strength,.08+.04*strength,700);osc(42,.9,.16+.05*strength,'sine',19,.05);if(navigator.vibrate){const p=n===3?[120,60,120]:n===2?[180,55,180,55,120]:[280,45,280,45,220];navigator.vibrate(p)}}
-function boomSound(){osc(62,1.5,.44,'sine',22);osc(118,.85,.18,'sawtooth',28);noise(1.25,.26,180);noise(.5,.12,1200,.03)}
-function fireworkSound(delay=0){osc(180+Math.random()*220,.13,.065,'triangle',760+Math.random()*520,delay);noise(.20,.13,1800,delay+.07);osc(58+Math.random()*24,.55,.12,'sine',28,delay+.08);for(let i=0;i<7;i++)noise(.07,.035,2600+Math.random()*2600,delay+.13+i*.032)}
+function countdownSound(n){
+const strength=4-n;
+osc(74-n*4,1.05,.34+.10*strength,'sine',18);
+osc(165-n*10,.55,.16+.05*strength,'sawtooth',42);
+noise(.38+.12*strength,.14+.05*strength,420);
+osc(38,1.2,.26+.06*strength,'sine',16,.04);
+if(navigator.vibrate){
+const p=n===3?[180,70,180]:n===2?[260,60,260,60,180]:[420,60,420,60,320];
+navigator.vibrate(p)}
+}
+function boomSound(){
+osc(48,2.4,.95,'sine',18);
+osc(82,1.6,.55,'sawtooth',24);
+osc(140,.9,.22,'triangle',60,.02);
+noise(2.1,.55,140,.01);
+noise(.9,.22,900,.08);
+noise(.4,.12,3500,.16);
+if(navigator.vibrate)navigator.vibrate([420,90,260]);
+}
+function fireworkSound(delay=0){
+osc(150+Math.random()*120,.18,.10,'triangle',1200+Math.random()*700,delay);
+osc(52+Math.random()*18,.85,.22,'sine',24,delay+.05);
+noise(.32,.22,1800,delay+.08);
+for(let i=0;i<14;i++)noise(.09,.055,2200+Math.random()*3800,delay+.14+i*.024);
+}
 async function prepareMusic(){
  try{
   if(musicBuffer)return musicBuffer;
@@ -73,16 +100,17 @@ async function prepareMusic(){
   return musicBuffer;
  }catch(e){console.warn('Muziek kon niet worden voorbereid',e);return null}
 }
-function startMusic(){
+async function startMusic(){
  if(!AC||!musicBuffer)return false;
  try{
+  if(AC.state==='suspended') await AC.resume();
   if(musicSource){try{musicSource.stop()}catch(e){}}
   musicSource=AC.createBufferSource();
   musicGain=AC.createGain();
   musicGain.gain.setValueAtTime(1,AC.currentTime);
   musicSource.buffer=musicBuffer;
   musicSource.connect(musicGain).connect(AC.destination);
-  musicSource.start(0);
+  musicSource.start(AC.currentTime+.03);
   return true;
  }catch(e){console.warn('Muziek kon niet starten',e);return false}
 }
@@ -95,18 +123,21 @@ function fadeMusic(){
  if(musicSource)setTimeout(()=>{try{musicSource.stop()}catch(e){}},4400)
 }
 async function run(){
- $('#start').disabled=true;unlockAudio();const prepared=prepareMusic();
+ $('#start').disabled=true;
+ await unlockAudio();
+ const prepared=prepareMusic();
  show('#protocol'); const logs=['Protocol gestart...','Beveiligde verbinding opgebouwd...','Authenticatie voltooid.','Nieuw level gedetecteerd.','Level 2 wordt vrijgegeven...'];
  for(let i=0;i<logs.length;i++){const d=document.createElement('div');d.className='entry';d.textContent=logs[i];$('#log').appendChild(d);$('#bar').style.width=((i+1)*20)+'%';protocolSound(i);await sleep(1050)}
  show('#countdown'); for(const n of [3,2,1]){$('#count').textContent=n;$('#count').classList.remove('pulse');void $('#count').offsetWidth;$('#count').classList.add('pulse');countdownSound(n);countBurst(5-n);await sleep(n===1?1650:1500)}
  layers.forEach(x=>x.classList.remove('active'));$('#cinema').classList.add('active');$('#city').classList.add('show');
- await prepared;startMusic();
+ await prepared;await startMusic();
  const durations=[5200,5200,5200,5200,5200,5200,5200,6000];
  for(let i=0;i<sceneEls.length;i++){sceneEls.forEach((s,j)=>s.classList.toggle('active',i===j));await sleep(durations[i])}
  $('#city').classList.remove('show');sceneEls.forEach(s=>s.classList.remove('active'));await sleep(650);
  $('#cinema').classList.remove('active');show('#boom');boomSound();countBurst(5);await sleep(1450);
  show('#finale');fireworks();setTimeout(()=>{$('#finale h2').classList.add('fade-away')},4300);fadeMusic()
 }
+document.addEventListener('visibilitychange',async()=>{if(!document.hidden&&AC&&AC.state==='suspended'){try{await AC.resume()}catch(e){}}});
 $('#start').addEventListener('click',run,{once:true});
 const c=$('#spark'),ctx=c.getContext('2d');let ps=[];function resize(){c.width=innerWidth*(devicePixelRatio||1);c.height=innerHeight*(devicePixelRatio||1);ctx.setTransform(devicePixelRatio||1,0,0,devicePixelRatio||1,0,0)}addEventListener('resize',resize);resize();
 function countBurst(power=1){const total=28+power*22;for(let i=0;i<total;i++){let a=Math.random()*Math.PI*2,s=(1.1+Math.random()*4.1)*power;ps.push({x:innerWidth/2,y:innerHeight/2,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:1,dh:Math.random()<(.05+power*.07),size:.8+Math.random()*1.8})}}
